@@ -1,3 +1,16 @@
+## 1.0.7
+
+- **:sparkles: Enhanced Story Navigation**: Added customizable tap callbacks for better story interaction control
+- **:gear: Android Build Configuration**: Updated Android build configurations and dependencies for improved compatibility
+- **:wrench: HTTP Headers Support**: Added support for custom HTTP headers in image and video story configurations
+- **:iphone: iOS Deployment Target**: Updated example app iOS deployment target to 13.0 for better compatibility
+- **:memo: Documentation Updates**: Enhanced README.md with new images, About section, and corrected demo links
+- **:bricks: Dependencies Update**: Updated package dependencies to latest compatible versions
+- **:bug: Issues Resolved**: 
+  - Closes [#41](https://github.com/devkrest/flutter_story_presenter/issues/41): "There is no ability to pass http headers to download image/video from network"
+  - Closes [#53](https://github.com/devkrest/flutter_story_presenter/issues/53): "Update to latest dependency"
+  - Supersedes [#47](https://github.com/devkrest/flutter_story_presenter/pull/47): "Add http headers for network images/videos" (duplicate PR)
+
 ## 1.0.6
 
 - :bug: When video is first then next stories are not appearing  [#37] (https://github.com/devkrest/flutter_story_presenter/issues/38)
