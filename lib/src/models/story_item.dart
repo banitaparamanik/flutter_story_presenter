@@ -17,6 +17,7 @@ class StoryItem {
     this.webConfig,
     this.customWidget,
     this.audioConfig,
+    this.productEntity,
   })  : assert(
           storyItemType == StoryItemType.custom || url != null,
           'URL is required when storyItemType is not custom',
@@ -64,4 +65,23 @@ class StoryItem {
 
   /// Applicable when [storyItemType] is [StoryItemType.web]
   final StoryViewWebConfig? webConfig;
+
+  /// Custom Entity
+  final CustomProductEntity? productEntity;
+}
+
+class CustomProductEntity {
+  final int? productId;
+  final String? offerName;
+  final String? offerType;
+  final String? offerView;
+  final int? duration;
+
+  CustomProductEntity({
+    this.productId,
+    this.offerName,
+    this.offerType,
+    this.offerView,
+    this.duration,
+  });
 }
