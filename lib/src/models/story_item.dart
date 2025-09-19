@@ -76,6 +76,7 @@ class CustomProductEntity {
   final String? offerType;
   final String? offerView;
   final int? duration;
+  final int? brandId;
 
   CustomProductEntity({
     this.productId,
@@ -83,5 +84,6 @@ class CustomProductEntity {
     this.offerType,
     this.offerView,
     this.duration,
+    this.brandId,
   });
 }
