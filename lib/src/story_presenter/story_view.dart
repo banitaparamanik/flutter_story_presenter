@@ -102,6 +102,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   AnimationController? _animationController;
   Animation? _currentProgressAnimation;
+  // Flag to avoid running animations or callbacks during/after dispose
+  bool _isDisposing = false;
   int currentIndex = 0;
   bool isCurrentItemLoaded = false;
   double currentItemProgress = 0;
@@ -150,12 +152,32 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   @override
   void dispose() {
-    _animationController?.dispose();
-    _animationController = null;
-    widget.flutterStoryController
-      ?..removeListener(_storyControllerListener)
-      ..dispose();
+    _isDisposing = true;
+
+    // Remove external controller listener but don't dispose external controller.
+    widget.flutterStoryController?.removeListener(_storyControllerListener);
+
+    // Cancel audio subscriptions and dispose audio player
     _audioDurationSubscriptionStream?.cancel();
+    _audioPlayerStateStream?.cancel();
+    try {
+      _audioPlayer?.dispose();
+    } catch (_) {}
+    _audioPlayer = null;
+
+    // Remove video listener and dispose
+    try {
+      _currentVideoPlayer?.removeListener(videoListener);
+      _currentVideoPlayer?.dispose();
+    } catch (_) {}
+    _currentVideoPlayer = null;
+
+    // Dispose animation controller
+    try {
+      _animationController?.dispose();
+    } catch (_) {}
+    _animationController = null;
+
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -206,10 +228,20 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Resets the animation controller and its listeners.
   void _resetAnimation() {
-    _animationController?.reset();
-    _animationController?.forward();
-    _animationController
-      ?..removeListener(animationListener)
+    // Avoid doing work while disposing or after widget is unmounted.
+    if (_isDisposing || !mounted) return;
+
+    // Safely reset and remove listeners if controller exists.
+    if (_animationController == null) return;
+
+    // Stop any running animation first.
+    try {
+      _animationController!.stop(canceled: true);
+    } catch (_) {}
+
+    _animationController!
+      ..reset()
+      ..removeListener(animationListener)
       ..removeStatusListener(animationStatusListener);
   }
 
@@ -220,6 +252,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Resumes the media playback.
   void _resumeMedia() {
+    if (_isDisposing || !mounted) return;
+
     _audioPlayer?.play();
     _currentVideoPlayer?.play();
     if (_currentProgressAnimation != null) {
@@ -231,6 +265,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Starts the countdown for the story item duration.
   void _startStoryCountdown() {
+    if (_isDisposing || !mounted) return;
+
     _currentVideoPlayer?.addListener(videoListener);
     if (_currentVideoPlayer != null) {
       return;
@@ -250,6 +286,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
               ..addListener(animationListener)
               ..addStatusListener(animationStatusListener);
 
+        // Ensure widget is still mounted and controller hasn't been disposed
+        if (!mounted || _animationController == null) return;
         _animationController!.forward();
       });
       _audioDurationSubscriptionStream =
@@ -281,11 +319,15 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
           ..addListener(animationListener)
           ..addStatusListener(animationStatusListener);
 
+    // Ensure widget is still mounted and controller hasn't been disposed
+    if (!mounted || _animationController == null) return;
     _animationController!.forward();
   }
 
   /// Listener for the video player's state changes.
   void videoListener() {
+    if (_isDisposing || !mounted) return;
+
     final dur = _currentVideoPlayer?.value.duration.inMilliseconds;
     final pos = _currentVideoPlayer?.value.position.inMilliseconds;
 
@@ -306,6 +348,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
   }
 
   void audioPositionListener(Duration position) {
+    if (_isDisposing || !mounted) return;
+
     final dur = position.inMilliseconds;
     final pos = _totalAudioDuration?.inMilliseconds;
 
@@ -317,6 +361,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Listener for the animation progress.
   void animationListener() {
+    if (_isDisposing || !mounted) return;
+
     currentItemProgress = _animationController?.value ?? 0;
   }
 
@@ -329,6 +375,8 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Pauses the media playback.
   void _pauseMedia() {
+    if (_isDisposing || !mounted) return;
+
     _audioPlayer?.pause();
     _currentVideoPlayer?.pause();
     _animationController?.stop(canceled: false);
@@ -348,6 +396,7 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
 
   /// Plays the next story item.
   void _playNext() async {
+    if (_isDisposing || !mounted) return;
     if (widget.items.length == 1 &&
         _currentVideoPlayer != null &&
         widget.restartOnCompleted) {
