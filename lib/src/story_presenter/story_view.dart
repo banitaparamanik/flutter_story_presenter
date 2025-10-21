@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_story_presenter/src/story_presenter/story_custom_view_wrapper.dart';
+import 'package:flutter_story_presenter/src/story_presenter/zoomable_story_item.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 
@@ -504,37 +505,43 @@ class _FlutterStoryPresenterState extends State<FlutterStoryPresenter>
         },
         if (currentItem.storyItemType.isImage) ...{
           Positioned.fill(
-            child: ImageStoryView(
-              key: ValueKey('$currentIndex'),
-              storyItem: currentItem,
-              onImageLoaded: (isLoaded) {
-                isCurrentItemLoaded = isLoaded;
-                _startStoryCountdown();
-              },
-              onAudioLoaded: (audioPlayer) {
-                _audioPlayer = audioPlayer;
-                isCurrentItemLoaded = true;
+            child: ZoomableStoryItem(
+              storyController: widget.flutterStoryController,
+              child: ImageStoryView(
+                key: ValueKey('$currentIndex'),
+                storyItem: currentItem,
+                onImageLoaded: (isLoaded) {
+                  isCurrentItemLoaded = isLoaded;
+                  _startStoryCountdown();
+                },
+                onAudioLoaded: (audioPlayer) {
+                  _audioPlayer = audioPlayer;
+                  isCurrentItemLoaded = true;
 
-                _startStoryCountdown();
-              },
+                  _startStoryCountdown();
+                },
+              ),
             ),
           ),
         },
         if (currentItem.storyItemType.isVideo) ...{
           Positioned.fill(
-            child: VideoStoryView(
-              storyItem: currentItem,
-              key: ValueKey('$currentIndex'),
-              looping: widget.items.length == 1 && widget.restartOnCompleted,
-              onVideoLoad: (videoPlayer) {
-                isCurrentItemLoaded = true;
-                _currentVideoPlayer = videoPlayer;
-                widget.onVideoLoad?.call(videoPlayer);
-                _startStoryCountdown();
-                if (mounted) {
-                  setState(() {});
-                }
-              },
+            child: ZoomableStoryItem(
+              storyController: widget.flutterStoryController,
+              child: VideoStoryView(
+                storyItem: currentItem,
+                key: ValueKey('$currentIndex'),
+                looping: widget.items.length == 1 && widget.restartOnCompleted,
+                onVideoLoad: (videoPlayer) {
+                  isCurrentItemLoaded = true;
+                  _currentVideoPlayer = videoPlayer;
+                  widget.onVideoLoad?.call(videoPlayer);
+                  _startStoryCountdown();
+                  if (mounted) {
+                    setState(() {});
+                  }
+                },
+              ),
             ),
           ),
         },
